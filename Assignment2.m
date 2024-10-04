@@ -27,7 +27,7 @@ classdef Assignment2
             %Plot the robot in it's initial configuration
             hold off;
             clf;
-            % self.robot1 = <Robot Model>(eye(4) * transl(0,0,0.5) * trotx(pi/2) * troty(pi/2));
+            self.robot1 = UR3e(eye(4) * transl(0,0,0.5) * trotx(pi/2) * troty(pi/2));
             hold on;
 
             surf([-5,-5;5,5] ...
@@ -44,8 +44,8 @@ classdef Assignment2
             
             %self.gripperLeft1  = <Gripper robot>();
             %self.gripperRight1 = <Gripper robot>();
-            self.gripperRight1.model.animate(self.gripperRight1.model.getpos()+pi);
-            self = self.commandGrippers('update');
+            %self.gripperRight1.model.animate(self.gripperRight1.model.getpos()+pi);
+            %self = self.commandGrippers('update');
             
             
             % Plot objects around the envionment
