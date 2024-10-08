@@ -15,7 +15,7 @@ classdef Assignment2
     
     methods
         %% Constructor
-        function self = Assignment1()
+        function self = Assignment2()
             Logger().write('\erase');
         end
         
@@ -27,7 +27,7 @@ classdef Assignment2
             %Plot the robot in it's initial configuration
             hold off;
             clf;
-            self.robot1 = UR3e(eye(4) * transl(0,0,0.5) * trotx(pi/2) * troty(pi/2));
+            self.robot1 = UR30(eye(4) * transl(0,0,0.5) * trotx(pi/2) * troty(pi/2));
             hold on;
 
             surf([-5,-5;5,5] ...
@@ -40,7 +40,7 @@ classdef Assignment2
             ylim([-1.4, 1.3]);
             zlim([-0.1, 1.5]);
             axis manual;
-            self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
+            self.robot1.model.animate(deg2rad([0 0 90 -90 -90 -90]));
             
             %self.gripperLeft1  = <Gripper robot>();
             %self.gripperRight1 = <Gripper robot>();
