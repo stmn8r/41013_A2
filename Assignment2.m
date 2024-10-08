@@ -30,12 +30,7 @@ classdef Assignment2
             self.robot1 = UR30(eye(4) * transl(0,0,0.5) * trotx(pi/2) * troty(pi/2));
             hold on;
 
-            surf([-5,-5;5,5] ...
-            ,[-5,5;-5,5] ...
-            ,[0.01,0.01;0.01,0.01] ...
-            ,'CData',imread('floor.jpg') ...
-            ,'FaceColor','texturemap');
-
+         
             xlim([-1.85, 1.5]);
             ylim([-1.4, 1.3]);
             zlim([-0.1, 1.5]);
@@ -49,6 +44,22 @@ classdef Assignment2
             
             
             % Plot objects around the envionment
+
+            % Add wood to floor
+            surf([-5,-5;5,5] ...        % x axis
+            ,[-4,4;-4,4] ...            % y axis
+            ,[0,0;0,0] ...          % z axis
+            ,'CData',imread('floor.jpg') ...
+            ,'FaceColor','texturemap');
+          
+        
+           % Place the bar at specefied location
+            PlaceObject('Bar.ply',[0,0,0]);
+    
+        
+            % Place the bar at specefied location
+            PlaceObject('Vodka.ply',[0.6,2.1,2.1]);
+           
 
             % % Plot the table
             % table = PlaceObject('tableBrown2.1x1.4x0.5m.ply', [0, 0, 0]);
