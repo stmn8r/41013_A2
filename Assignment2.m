@@ -31,10 +31,10 @@ classdef Assignment2
             hold on;
 
          
-            xlim([-1.85, 1.5]);
-            ylim([-1.4, 1.3]);
-            zlim([-0.1, 1.5]);
-            axis manual;
+            xlim([-5, 5]);
+            ylim([-5, 5]);
+            zlim([-0.1, 2]);
+            axis equal;
             self.robot1.model.animate(deg2rad([0 0 90 -90 -90 -90]));
             
             %self.gripperLeft1  = <Gripper robot>();
@@ -53,12 +53,14 @@ classdef Assignment2
             ,'FaceColor','texturemap');
           
         
-           % Place the bar at specefied location
+            % Place the bar at specified location
             PlaceObject('Bar.ply',[0,0,0]);
     
         
-            % Place the bar at specefied location
-            PlaceObject('Vodka.ply',[0.6,2.1,2.1]);
+            % Place the bar at specified location
+            PlaceObject('Vodka.ply',[-1,-1,1.8]);
+
+            PlaceObject('Whisky.ply',[1,-2,1.8]);
            
 
             % % Plot the table
