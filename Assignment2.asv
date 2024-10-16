@@ -14,10 +14,10 @@ classdef Assignment2
         cyl = [];
 
         % Shelf positions
-        Shelf_pos_1 = [-0.7,2.2,1.5];
-        Shelf_pos_2 = [-0.7,2.2,1.1];
-        Shelf_pos_3 = [0.6,2.2,1.5];
-        Shelf_pos_4 = [0.6,2.2,1.1];
+        Shelf_pos_1 = [-0.7,2.2,1.1];
+        Shelf_pos_2 = [0.7,2.2,1.1];
+        Shelf_pos_3 = [];
+        Shelf_pos_4 = [];
     end
     
     methods
@@ -63,12 +63,13 @@ classdef Assignment2
         
             % Place the bar at specified location
             PlaceObject('Bar.ply',[0,0,0]);
+    
         
-            % Place the ingredients at specified locations
-            self.bottles{1} = PlaceObject('Whisky.ply',self.Shelf_pos_1);
-            self.bottles{2} = PlaceObject('Vodka.ply',self.Shelf_pos_2);
-            self.bottles{3} = PlaceObject('Cognac.ply',self.Shelf_pos_3);
-            self.bottles{4} = PlaceObject('Glass.ply',self.Shelf_pos_4);
+            % Place the bar at specified location
+            self.bottles{1} = PlaceObject('Vodka.ply',[-0.7,2.2,1.1]);
+
+            self.bottles{2} = PlaceObject('Whisky.ply',[0.7,2.2,1.1]);
+           
 
             % % Plot the table
             % table = PlaceObject('tableBrown2.1x1.4x0.5m.ply', [0, 0, 0]);
