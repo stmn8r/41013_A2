@@ -39,7 +39,7 @@ classdef Assignment2
          
             xlim([-5, 5]);
             ylim([-5, 5]);
-            zlim([-0.1, 2]);
+            zlim([-5, 5]);
             axis equal;
             self.robot1.model.animate(deg2rad([0 0 0 -90 0 0]));
             
@@ -182,15 +182,17 @@ classdef Assignment2
                        
             switch(command)
                 case 'update'
-                    t = hgtransform;
-                    set(self.gripperLeft1{1}, 'Parent', t);
-                    set(t, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2)));
-
-                    set(self.gripperRight1{1}, 'Parent', t);
-                    set(t, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2)));
-
-                    set(self.gripperBase1, 'Parent', t);
-                    set(t, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2)));
+                    t1 = hgtransform;
+                    set(self.gripperLeft1{1}, 'Parent', t1);
+                    set(t1, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2) * trotz(-pi/2) * trotx(pi)));
+                    
+                    t2 = hgtransform;
+                    set(self.gripperRight1{1}, 'Parent', t2);
+                    set(t2, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2) * trotz(-pi/2)));
+                    
+                    t3 = hgtransform;
+                    set(self.gripperBase1, 'Parent', t3);
+                    set(t3, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2) * trotz(-pi/2)));
                     
     
                 case 'open'
