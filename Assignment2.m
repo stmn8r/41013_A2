@@ -33,13 +33,13 @@ classdef Assignment2
             
             %Plot the robot in it's initial configuration
             clf;
-            self.robot1 = UR30(eye(4) * transl(0,1.5,1) * trotx(0) * troty(0));
+            self.robot1 = UR30(eye(4) * transl(0,1.45,1) * trotx(0) * troty(0));
             hold on;
 
          
             xlim([-5, 5]);
             ylim([-5, 5]);
-            zlim([-0.1, 2]);
+            zlim([-5, 5]);
             axis equal;
             self.robot1.model.animate(deg2rad([0 0 0 -90 0 0]));
             
@@ -135,12 +135,14 @@ classdef Assignment2
         
         %% Control Loop
         function self = controlLoop(self)
+           run = false;
            while run == true
-
+                
            end
 
-            Logger().write('Program Completed');
-            pause;
+           self = self.moveToPose(transl(self.Shelf_pos_2(1), self.Shelf_pos_2(2)-0.12, self.Shelf_pos_2(3)) * rpy2tr(-pi/2,0,0));
+           Logger().write('Program Completed');
+           pause;
         end
 
         %% get pose
@@ -182,15 +184,17 @@ classdef Assignment2
                        
             switch(command)
                 case 'update'
-                    t = hgtransform;
-                    set(self.gripperLeft1{1}, 'Parent', t);
-                    set(t, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2)));
-
-                    set(self.gripperRight1{1}, 'Parent', t);
-                    set(t, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2)));
-
-                    set(self.gripperBase1, 'Parent', t);
-                    set(t, 'Matrix', (self.getposeT() * transl(0, 0, -0.3) * trotx(pi/2)));
+                    t1 = hgtransform;
+                    set(self.gripperLeft1{1}, 'Parent', t1);
+                    set(t1, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2) * trotx(pi)));
+                    
+                    t2 = hgtransform;
+                    set(self.gripperRight1{1}, 'Parent', t2);
+                    set(t2, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2)));
+                    
+                    t3 = hgtransform;
+                    set(self.gripperBase1, 'Parent', t3);
+                    set(t3, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2)));
                     
     
                 case 'open'
@@ -237,6 +241,7 @@ classdef Assignment2
                 self.moveBottle(self.holdbottle_(2));
             end
             drawnow();
+            pause(0.1);
         end
 
         %% Free move to given pose with ikcon
@@ -245,7 +250,7 @@ classdef Assignment2
             q0 = self.robot1.model.getpos(); % Initial joint values
             qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
             for q = 1:size(qf,2)
-                if abs(qf(q)) > pi
+                while abs(qf(q)) > pi
                     if qf(q) > 0
                         qf(q) = qf(q) - pi;
                     else
@@ -268,9 +273,10 @@ classdef Assignment2
             ActPose = self.getposeT();
             
             while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
                 Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' trying again...']);
                 q0 = self.robot1.model.getpos(); % Initial joint values
-                qf = self.robot1.model.ikcon(pose * transl(0,0-0.01), q0); % joint values for target pose
+                qf = self.robot1.model.ikcon(pose * transl(0,0,-0.01), q0); % joint values for target pose
                 qMatrix = jtraj(q0, qf, self.jtraj_steps);
 
                 for frame2 = 1:self.jtraj_steps 
@@ -479,9 +485,6 @@ classdef Assignment2
             self = self.plotRadAndVol();
             self = self.hideVol();
             self = self.controlLoop();
-
-
-
         end
 
     end

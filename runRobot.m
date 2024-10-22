@@ -5,3 +5,4 @@ self = Assignment2();
 
 % Call the run method
 self = self.initialiseScene();
+self = self.controlLoop();
