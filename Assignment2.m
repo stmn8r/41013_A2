@@ -14,8 +14,8 @@ classdef Assignment2
         cyl = [];
 
         % Shelf positions
-        Shelf_pos_1 = [-0.7,2.2,1.5];
-        Shelf_pos_2 = [-0.7,2.2,1.1];
+        Shelf_pos_1 = [0.8,2.2,1.5];
+        Shelf_pos_2 = [0.8,2.2,1.1];
         Shelf_pos_3 = [0.6,2.2,1.5];
         Shelf_pos_4 = [0.6,2.2,1.1];
     end
@@ -45,9 +45,9 @@ classdef Assignment2
             
             self.gripperBase1 = PlaceObject('gripperBase.ply',[0,0,0]);
             self.gripperLeft1{1} = PlaceObject('gripperClaw.ply',[0,0,0]);
-            self.gripperLeft1{2} = deg2rad(0);
+            self.gripperLeft1{2} = deg2rad(20);
             self.gripperRight1{1} = PlaceObject('gripperClaw.ply',[0,0,0]);
-            self.gripperRight1{2} = deg2rad(0);
+            self.gripperRight1{2} = deg2rad(20);
             self = self.commandGrippers('update');
             
             
@@ -62,72 +62,13 @@ classdef Assignment2
           
         
             % Place the bar at specified location
-            PlaceObject('Bar.ply',[0,0,0]);
+            PlaceObject('Bar.PLY',[0,0,0]);
         
             % Place the ingredients at specified locations
             self.bottles{1} = PlaceObject('Whisky.ply',self.Shelf_pos_1);
             self.bottles{2} = PlaceObject('Vodka.ply',self.Shelf_pos_2);
             self.bottles{3} = PlaceObject('Cognac.ply',self.Shelf_pos_3);
             self.bottles{4} = PlaceObject('Glass.ply',self.Shelf_pos_4);
-
-            % % Plot the table
-            % table = PlaceObject('tableBrown2.1x1.4x0.5m.ply', [0, 0, 0]);
-            % t = hgtransform;
-            % set(table, 'Parent', t);
-            % set(t, 'Matrix', (transl(-0.3, 0, 0)));
-            % 
-            % % Place emergency stop button
-            % estop = PlaceObject('emergencyStopButton.ply', [0, 0, 0]);
-            % verts = [get(estop, 'Vertices'), ones(size(get(estop, 'Vertices'), 1), 1)]; % Rotation
-            % verts = verts * 0.2; % Scaling factor
-            % set(estop, 'Vertices', verts(:, 1:3));
-            % t = hgtransform;
-            % set(estop, 'Parent', t);
-            % set(t, 'Matrix', (transl(0.65, -0.6, 0.5) * trotz(pi/2)));
-            % 
-            % % Place emergency stop button
-            % estop2 = PlaceObject('emergencyStopButton.ply', [0, 0, 0]);
-            % verts = [get(estop2, 'Vertices'), ones(size(get(estop2, 'Vertices'), 1), 1)]; % Rotation
-            % verts = verts * 0.2; % Scaling factor
-            % set(estop2, 'Vertices', verts(:, 1:3));
-            % t = hgtransform;
-            % set(estop2, 'Parent', t);
-            % set(t, 'Matrix', (transl(1.1, -1.1, 0.55) * trotx(pi/2)));
-            % 
-            % % Place fence
-            % fence = PlaceObject('fence.ply', [0, 0, 0]);
-            % verts = [get(fence, 'Vertices'), ones(size(get(fence, 'Vertices'), 1), 1)]; % Rotation
-            % verts(:,1) = verts(:,1) * 0.4; % Scaling factor
-            % verts(:,2) = verts(:,2) * 0.6; % Scaling factor
-            % verts(:,3) = verts(:,3) * 0.3; % Scaling factor
-            % set(fence, 'Vertices', verts(:, 1:3));
-            % t = hgtransform;
-            % set(fence, 'Parent', t);
-            % set(t, 'Matrix', (transl(-0.1, 0.55, -0.3)));
-            % 
-            % % Place fire extinguisher
-            % fireEx = PlaceObject('fireExtinguisher.ply', [0, 0, 0]);
-            % t = hgtransform;
-            % set(fireEx, 'Parent', t);
-            % set(t, 'Matrix', (transl(0.5, -1.25, 0)));
-            % 
-            % % Place the bricks
-            % lastPosition = [0.3, -0.4, 0.5];
-            % for i = 1:9
-            % 
-            %     if mod(i,3) == 1 && i ~= 1
-            %         self.brickPositions{i} = lastPosition + [0.1, -0.4, 0];  % Move bricks along -x axis
-            %         lastPosition = self.brickPositions{i};
-            %     else
-            %         self.brickPositions{i} = lastPosition + [0, 0.2, 0];  % Move bricks along -x axis
-            %         lastPosition = self.brickPositions{i};
-            %     end
-            %     self.bricks{i} = PlaceObject('HalfSizedRedGreenBrick.ply', [0,0,0]);
-            %     t = hgtransform;
-            %     set(self.bricks{i}, 'Parent', t);
-            %     set(t, 'Matrix', (transl(self.brickPositions{i})));
-            % end
-            
 
             drawnow();
             Logger().write('Initialisation finished');
@@ -140,9 +81,8 @@ classdef Assignment2
                 
            end
 
-           self = self.moveToPose(transl(self.Shelf_pos_2(1), self.Shelf_pos_2(2)-0.12, self.Shelf_pos_2(3)) * rpy2tr(-pi/2,0,0));
+           self = self.moveToPose(transl(self.Shelf_pos_3(1), self.Shelf_pos_3(2)-0.12, self.Shelf_pos_2(3)+0.2) * rpy2tr(-pi/2,0,0));
            Logger().write('Program Completed');
-           pause;
         end
 
         %% get pose
@@ -186,11 +126,11 @@ classdef Assignment2
                 case 'update'
                     t1 = hgtransform;
                     set(self.gripperLeft1{1}, 'Parent', t1);
-                    set(t1, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2) * trotx(pi)));
+                    set(t1, 'Matrix', (self.getposeT() * transl(-0.03, 0, 0.07) * trotx(-pi/2) * trotz(-pi/2) * trotx(pi) * trotz(self.gripperLeft1{2})));
                     
                     t2 = hgtransform;
                     set(self.gripperRight1{1}, 'Parent', t2);
-                    set(t2, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2)));
+                    set(t2, 'Matrix', (self.getposeT() * transl(0.03, 0, 0.07) * trotx(-pi/2) * trotz(-pi/2) * trotz(self.gripperRight1{2})));
                     
                     t3 = hgtransform;
                     set(self.gripperBase1, 'Parent', t3);
@@ -241,7 +181,6 @@ classdef Assignment2
                 self.moveBottle(self.holdbottle_(2));
             end
             drawnow();
-            pause(0.1);
         end
 
         %% Free move to given pose with ikcon
