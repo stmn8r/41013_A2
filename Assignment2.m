@@ -26,12 +26,22 @@ classdef Assignment2
                          0.8 2.15 1.1;
                          0.6 2.15 1.48;
                          0.6 2.15 1.1];
+
+        joy = [];
+        joy_status = false;
+        joyToggle = false;
     end
     
     methods
         %% Constructor
         function self = Assignment2()
             Logger().write('\erase');
+            try
+                self.joy = vrjoystick(1);
+                self.joy_status = true;
+            catch ERR
+                disp(ERR.message);
+            end
         end
         
         %% Initialize Scene
@@ -94,7 +104,6 @@ classdef Assignment2
 
             drawnow();
             Logger().write('Initialisation finished');
-            pause;
         end
         
         %% Control Loop
@@ -131,43 +140,43 @@ classdef Assignment2
         %% Gui command to pour straight drink variant 1
         function self = straightDrink1(self)
             
-            self = self.moveToPose(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPose(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,1];
-            self = self.moveToPose(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPose(self.getPoseT() * transl(0, 0, -1));
-            self = self.moveToPose(self.getPoseT() * transl(0, 0, 1));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, -1));
+            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, 1));
             self.holdbottle_ = [false,1];
             self.SnapBottleTo(1, self.shelf_pos_arr(1,:), [0,0,0]);
-            self = self.moveToPose(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
         end
 
         %% Gui command to pour straight drink variant 2
         function self = straightDrink2(self)
             
-            self = self.moveToPose(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPose(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.12, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.12, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,2];
-            self = self.moveToPose(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPose(self.getPoseT() * transl(0, 0, -1));
-            self = self.moveToPose(self.getPoseT() * transl(0, 0, 1));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, -1));
+            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, 1));
             self.holdbottle_ = [false,2];
             self.SnapBottleTo(2, self.shelf_pos_arr(2,:), [0,0,0]);
-            self = self.moveToPose(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
         end
 
         %% Gui command to pour straight drink variant 3
         function self = straightDrink3(self)
             
-            self = self.moveToPose(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPose(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.12, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.12, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,3];
-            self = self.moveToPose(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPose(self.getPoseT() * transl(0, 0, -1));
-            self = self.moveToPose(self.getPoseT() * transl(0, 0, 1));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, -1));
+            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, 1));
             self.holdbottle_ = [false,3];
             self.SnapBottleTo(3, self.shelf_pos_arr(3,:), [0,0,0]);
-            self = self.moveToPose(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
         end
 
         
@@ -265,11 +274,34 @@ classdef Assignment2
             if self.holdbottle_(1) == true
                 self.HoldBottle(self.holdbottle_(2));
             end
+            
+
+            if (self.joy_status == true)
+                [axes, buttons, povs] = read(self.joy); %get controller values
+                if (buttons(13) == 1) % if ps5 button is pressed, loop manual control code until ps5 button is released then pressed again
+                    self.joyToggle = true; % manually control variable on
+                    button_release = false;
+                    
+                    while (self.joyToggle == true) 
+                        self = self.commandGrippers('update');
+                        joystick_command();
+                        
+                        if (buttons(13) == 0)
+                            button_release = true;
+                        end
+                        if (button_release == true && buttons(13) == 1)
+                            self.joyToggle = false;
+                        end
+                    end
+                    pause(2);
+                end
+            end
+
             drawnow();
         end
 
         %% Free move to given pose with ikcon
-        function self = moveToPose(self, pose)
+        function self = moveToPoseIkcon(self, pose)
             
             q0 = self.robot1.model.getpos(); % Initial joint values
             qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
@@ -316,6 +348,75 @@ classdef Assignment2
             Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
             Logger().write(' ');
         end
+
+
+        %% Free move to given pose with Resolved Motion Rate Control (RMRC) 
+        function self = moveToPoseRMRC(self, pose)
+            
+            q0 = self.robot1.model.getpos(); % Initial joint values
+            qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
+            for q = 1:size(qf,2)
+                while abs(qf(q)) > 2*pi
+                    if qf(q) > 0
+                        qf(q) = qf(q) - pi;
+                    else
+                        qf(q) = qf(q) + pi;
+                    end
+                end
+            end
+
+            qMatrix = jtraj(q0, qf, self.jtraj_steps);
+
+            Logger().write(['   Target Joint State: ',mat2str(qf)]);
+            Logger().write(['   Target Pose: ',mat2str(pose)]);
+            
+            s = lspb(0,1,steps);                                 % Create interpolation scalar
+            for i = 1:steps
+                qMatrix(:,i) = q0*(1-s(i)) + qf*s(i);                  % Create trajectory in x-y plane
+            end
+
+            qMatrix(1,:) = self.robot1.model.ikine(pose, 'q0', [0 0], 'mask', M);                 % Solve for joint angles
+
+            for i = 1:steps-1
+                xdot = (x(:,i+1) - x(:,i))/deltaT;                             % Calculate velocity at discrete time step
+                J = p2.jacob0(qMatrix(i,:));            % Get the Jacobian at the current state
+                J = J(1:2,:);                           % Take only first 2 rows
+                qdot = inv(J)*xdot;                             % Solve velocitities via RMRC
+                qMatrix(i+1,:) =  qMatrix(i,:) + deltaT*qdot';                   % Update next joint state
+            end
+
+p2.plot(qMatrix,'trail','r-');
+
+
+            for frame = 1:self.jtraj_steps 
+                self.robot1.model.animate(qMatrix(frame,:));
+                if mod(frame,10)
+                    self = self.frameUpdate();
+                end
+            end
+            ActPose = self.getPoseT();
+            
+            while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' trying again...']);
+                q0 = self.robot1.model.getpos(); % Initial joint values
+                qf = self.robot1.model.ikcon(pose * transl(0,0,-0.01), q0); % joint values for target pose
+                qMatrix = jtraj(q0, qf, self.jtraj_steps);
+
+                for frame2 = 1:self.jtraj_steps 
+                    self.robot1.model.animate(qMatrix(frame2,:));
+                    if mod(frame2,10)
+                        self = self.frameUpdate();
+                    end
+                end
+                ActPose = self.getPoseT();
+            end
+            
+            Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+            Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
+            Logger().write(' ');
+        end
+
         
         %% Move to given Joint State
         function self = moveManual(self, qf)
