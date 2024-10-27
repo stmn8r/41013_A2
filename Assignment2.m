@@ -14,7 +14,8 @@ classdef Assignment2
         bottlePositions = []; % Array to store bottle positions
         holdbottle_ = [false, 1]; % stores whether the gripper is holding a bottle, and the index of the bottle (from array 'bottles')
         
-        jtraj_steps = 14; %should be an even number
+        steps = 14; %should be an even number
+        dt = 0.05;  % Discrete time step for simulation
         
         safeBound = [];
         elip1 = [];
@@ -143,9 +144,9 @@ classdef Assignment2
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,1];
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, -1));
-            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, 1));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,1];
             self.SnapBottleTo(1, self.shelf_pos_arr(1,:), [0,0,0]);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
@@ -158,8 +159,8 @@ classdef Assignment2
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.12, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,2];
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, -1));
-            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, 1));
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,2];
             self.SnapBottleTo(2, self.shelf_pos_arr(2,:), [0,0,0]);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
@@ -171,9 +172,9 @@ classdef Assignment2
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.12, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,3];
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, -1));
-            self = self.moveToPoseIkcon(self.getPoseT() * transl(0, 0, 1));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,3];
             self.SnapBottleTo(3, self.shelf_pos_arr(3,:), [0,0,0]);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
@@ -184,6 +185,7 @@ classdef Assignment2
         %% get pose.T
         function output = getPoseT(self)
             output = self.robot1.model.fkine(self.robot1.model.getpos()).T;
+            
         end
 
         %% get Joint State
@@ -234,36 +236,20 @@ classdef Assignment2
                 case 'open'
                     Logger().write('open claw');
                     Logger().write(' ');
-                    self.jtraj_steps = self.jtraj_steps/2;
-                    qMatrix1  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(10), self.jtraj_steps);
-                    qMatrix2  = jtraj(self.gripperRight1.model.getpos(), deg2rad(190), self.jtraj_steps);
+                    self.steps = self.steps/2;
                     
-                    for frame = 1:self.jtraj_steps
-                        self.gripperLeft1.model.animate(qMatrix1(frame,:));
-                        self.gripperRight1.model.animate(qMatrix2(frame,:));
-                        
-                        if (mod(frame,1))
-                            drawnow();
-                        end
-                    end
-                    self.jtraj_steps = self.jtraj_steps*2;
+
+
+                    self.steps = self.steps*2;
     
                 case 'close'
                     Logger().write('close claw');
                     Logger().write(' ');
-                    self.jtraj_steps = self.jtraj_steps/2;
-                    qMatrix1  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(3), self.jtraj_steps);
-                    qMatrix2  = jtraj(self.gripperRight1.model.getpos(), deg2rad(183), self.jtraj_steps);
-                
-                    for frame = 1:self.jtraj_steps
-                        self.gripperLeft1.model.animate(qMatrix1(frame,:));
-                        self.gripperRight1.model.animate(qMatrix2(frame,:));
-                        
-                        if (mod(frame,1))
-                            drawnow();
-                        end
-                    end
-                    self.jtraj_steps = self.jtraj_steps*2;
+                    self.steps = self.steps/2;
+                  
+
+
+                    self.steps = self.steps*2;
             end
         
         end
@@ -298,6 +284,7 @@ classdef Assignment2
             end
 
             drawnow();
+            pause(self.dt);
         end
 
         %% Free move to given pose with ikcon
@@ -315,106 +302,99 @@ classdef Assignment2
                 end
             end
 
-            qMatrix = jtraj(q0, qf, self.jtraj_steps);
+            qMatrix = jtraj(q0, qf, self.steps);
 
             Logger().write(['   Target Joint State: ',mat2str(qf)]);
             Logger().write(['   Target Pose: ',mat2str(pose)]);
             
-            for frame = 1:self.jtraj_steps 
+            for frame = 1:self.steps 
                 self.robot1.model.animate(qMatrix(frame,:));
-                if mod(frame,10)
-                    self = self.frameUpdate();
-                end
+
+                self = self.frameUpdate();
+
             end
             ActPose = self.getPoseT();
             
-            while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+            if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                
                 Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
-                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' trying again...']);
-                q0 = self.robot1.model.getpos(); % Initial joint values
-                qf = self.robot1.model.ikcon(pose * transl(0,0,-0.01), q0); % joint values for target pose
-                qMatrix = jtraj(q0, qf, self.jtraj_steps);
+                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' Failed to achieve desired pose']);
 
-                for frame2 = 1:self.jtraj_steps 
-                    self.robot1.model.animate(qMatrix(frame2,:));
-                    if mod(frame2,10)
-                        self = self.frameUpdate();
-                    end
-                end
-                ActPose = self.getPoseT();
-            end
+            else
             
-            Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
-            Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
-            Logger().write(' ');
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
+                Logger().write(' ');
+
+            end
         end
 
 
         %% Free move to given pose with Resolved Motion Rate Control (RMRC) 
-        function self = moveToPoseRMRC(self, pose)
+        function self = moveToPoseRMRC(self, pose, mask)
             
-            q0 = self.robot1.model.getpos(); % Initial joint values
-            qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
-            for q = 1:size(qf,2)
-                while abs(qf(q)) > 2*pi
-                    if qf(q) > 0
-                        qf(q) = qf(q) - pi;
-                    else
-                        qf(q) = qf(q) + pi;
-                    end
-                end
-            end
+            q0 = self.robot1.model.getpos();
 
-            qMatrix = jtraj(q0, qf, self.jtraj_steps);
+            T0 = self.getPoseT();     % Starting position
+            Tf = pose;                              % Ending position
 
-            Logger().write(['   Target Joint State: ',mat2str(qf)]);
-            Logger().write(['   Target Pose: ',mat2str(pose)]);
+            x0 = transl(T0);                        % Starting position (x, y, z)
+            xf = transl(Tf);                        % Target position (x, y, z)
+
+            rpy0 = tr2rpy(T0);                      % Starting orientation (roll, pitch, yaw)
+            rpyf = tr2rpy(Tf);                      % Target orientation (roll, pitch, yaw)
+
+            s = lspb(0, 1, self.steps);             % LSPB interpolation scalar
+
+            lambda = 0.2;
             
-            s = lspb(0,1,steps);                                 % Create interpolation scalar
-            for i = 1:steps
-                qMatrix(:,i) = q0*(1-s(i)) + qf*s(i);                  % Create trajectory in x-y plane
+            % Initialize arrays for storing trajectory
+            pos_trajectory = zeros(3, self.steps);     % Position trajectory (x, y, z)
+            rpy_trajectory = zeros(3, self.steps);     % Orientation trajectory (roll, pitch, yaw)
+            
+            % Interpolate both position and orientation
+            for i = 1:self.steps
+                % Linear interpolation for position (3D space)
+                pos_trajectory(:, i) = x0*(1-s(i)) + s(i)*xf;
+                
+                % Linear interpolation for orientation (RPY)
+                rpy_trajectory(:, i) = rpy0*(1-s(i)) + s(i)*rpyf;
+            end
+            
+            qMatrix = nan(self.steps,6);
+            qMatrix(1,:) = self.robot1.model.ikine(T0, 'q0', q0, 'mask', mask);                 % Solve for joint angles
+
+            for i = 1:self.steps-1
+
+                xdot_pos = (pos_trajectory(:, i+1) - pos_trajectory(:, i)) / self.dt;  % Linear velocity
+                xdot_ori = (rpy_trajectory(:, i+1) - rpy_trajectory(:, i)) / self.dt;  % Angular velocity
+                xdot = [xdot_pos; xdot_ori];   % Full twist (6x1 vector: [vx; vy; vz; wx; wy; wz])
+
+                J = self.robot1.model.jacob0(qMatrix(i,:));                   % Get the Jacobian at the current state
+                Jinv_dls = inv((J'*J)+lambda^2*eye(6))*J';
+                qdot = Jinv_dls*xdot;                                              % Solve velocitities via RMRC
+                qMatrix(i+1,:) =  qMatrix(i,:) + self.dt*qdot';             % Update next joint state
             end
 
-            qMatrix(1,:) = self.robot1.model.ikine(pose, 'q0', [0 0], 'mask', M);                 % Solve for joint angles
-
-            for i = 1:steps-1
-                xdot = (x(:,i+1) - x(:,i))/deltaT;                             % Calculate velocity at discrete time step
-                J = p2.jacob0(qMatrix(i,:));            % Get the Jacobian at the current state
-                J = J(1:2,:);                           % Take only first 2 rows
-                qdot = inv(J)*xdot;                             % Solve velocitities via RMRC
-                qMatrix(i+1,:) =  qMatrix(i,:) + deltaT*qdot';                   % Update next joint state
-            end
-
-p2.plot(qMatrix,'trail','r-');
-
-
-            for frame = 1:self.jtraj_steps 
+            for frame = 1:self.steps 
                 self.robot1.model.animate(qMatrix(frame,:));
-                if mod(frame,10)
-                    self = self.frameUpdate();
-                end
+
+                self = self.frameUpdate();
+
             end
             ActPose = self.getPoseT();
             
-            while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+            if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
                 Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
-                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' trying again...']);
-                q0 = self.robot1.model.getpos(); % Initial joint values
-                qf = self.robot1.model.ikcon(pose * transl(0,0,-0.01), q0); % joint values for target pose
-                qMatrix = jtraj(q0, qf, self.jtraj_steps);
-
-                for frame2 = 1:self.jtraj_steps 
-                    self.robot1.model.animate(qMatrix(frame2,:));
-                    if mod(frame2,10)
-                        self = self.frameUpdate();
-                    end
-                end
-                ActPose = self.getPoseT();
-            end
+                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' Failed to achieve desired pose']);
             
-            Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
-            Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
-            Logger().write(' ');
+            else
+            
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
+                Logger().write(' ');
+
+            end
         end
 
         
@@ -423,10 +403,10 @@ p2.plot(qMatrix,'trail','r-');
 
             q0 = self.robot1.model.getpos(); % Initial joint values          
 
-            qSuperMatrix = zeros(self.jtraj_steps, size(qf,2));
+            qSuperMatrix = zeros(self.steps, size(qf,2));
             for i = 1:size(qf,2)
                 if ~isnan(qf(i))
-                    qMatrix = jtraj(q0(i), qf(i), self.jtraj_steps);
+                    qMatrix = jtraj(q0(i), qf(i), self.steps);
                     qSuperMatrix(:,i) = qMatrix;
                 else
                     qSuperMatrix(:,i) = q0(i);
@@ -438,78 +418,70 @@ p2.plot(qMatrix,'trail','r-');
             Logger().write(['   Moving to Joint State ',mat2str(qf)]);
             Logger().write(['   Target Pose ',mat2str(pose)]);
             
-            for frame = 1:self.jtraj_steps 
+            for frame = 1:self.steps 
                 self.robot1.model.animate(qSuperMatrix(frame,:));
-                if mod(frame,10)
-                    self = self.frameUpdate();
-                end
+
+                self = self.frameUpdate();
+
             end
             ActPose = self.getPoseT();
             
-            while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
-                Logger().write(['   Δ = ',sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2),' trying again...']);
-                q0 = self.robot1.model.getpos(); % Initial joint values
-                qf = self.robot1.model.ikcon(pose * transl(0,0,-0.01), q0); % joint values for target pose
-                qMatrix = jtraj(q0, qf, self.jtraj_steps);
+            if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                Logger().write(['   Δ = ',sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2),' Failed to achieve desired pose']);
 
-                for frame2 = 1:self.jtraj_steps 
-                    self.robot1.model.animate(qMatrix(frame2,:));
-                    if mod(frame2,10)
-                        self = self.frameUpdate();
-                    end
-                end
-                ActPose = self.getPoseT();
-            end
+            else
 
             Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
             Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
             Logger().write(' ');
+
+            end
         end
 
         %% simultaneous movement demo
-        function simulMoveDemo(self)
-            self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
-
-            endAffectorTr = self.getPoseT() * troty(-pi/2);
-            self.gripperLeft1.model.base = endAffectorTr;
-            self.gripperRight1.model.base = endAffectorTr * troty(pi);
-            self.gripperLeft1.model.animate(deg2rad(190));
-            self.gripperRight1.model.animate(deg2rad(10));
-
-            q0 = self.robot1.model.getpos(); % Initial joint values
-            qf = self.robot1.model.ikcon(self.getPoseT * transl(0.2,0.2,0), q0); % joint values for target pose
-            
-            for q = 1:size(qf,2)
-                if abs(qf(q)) > 2*pi
-                    if qf(q) > 0
-                        qf(q) = qf(q) - pi;
-                    else
-                        qf(q) = qf(q) + pi;
-                    end
-                end
-            end
-
-            qMatrixBase = jtraj(q0, qf, 100);
-            qMatrixRight  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(170), 100);
-            qMatrixLeft  = jtraj(self.gripperRight1.model.getpos(), deg2rad(-10), 100);
-            
-            for frame = 1:100 
-                self.robot1.model.animate(qMatrixBase(frame,:));
-
-                endAffectorTr = self.getPoseT() * troty(-pi/2);
-                self.gripperLeft1.model.base = endAffectorTr;
-                self.gripperRight1.model.base = endAffectorTr * troty(pi);
-                self.gripperLeft1.model.animate(qMatrixLeft(frame,:));
-                self.gripperRight1.model.animate(qMatrixRight(frame,:));
-
-                self = self.frameUpdate();
-            end
-
-            pause(3);
-            self = self.commandGrippers('open');
-            self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
-            self = self.commandGrippers('update');
-        end
+        % function simulMoveDemo(self)
+            % self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
+            % 
+            % endAffectorTr = self.getPoseT() * troty(-pi/2);
+            % self.gripperLeft1.model.base = endAffectorTr;
+            % self.gripperRight1.model.base = endAffectorTr * troty(pi);
+            % self.gripperLeft1.model.animate(deg2rad(190));
+            % self.gripperRight1.model.animate(deg2rad(10));
+            % 
+            % q0 = self.robot1.model.getpos(); % Initial joint values
+            % qf = self.robot1.model.ikcon(self.getPoseT * transl(0.2,0.2,0), q0); % joint values for target pose
+            % 
+            % for q = 1:size(qf,2)
+            %     if abs(qf(q)) > 2*pi
+            %         if qf(q) > 0
+            %             qf(q) = qf(q) - pi;
+            %         else
+            %             qf(q) = qf(q) + pi;
+            %         end
+            %     end
+            % end
+            % 
+            % qMatrixBase = jtraj(q0, qf, 100);
+            % qMatrixRight  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(170), 100);
+            % qMatrixLeft  = jtraj(self.gripperRight1.model.getpos(), deg2rad(-10), 100);
+            % 
+            % for frame = 1:100 
+            %     self.robot1.model.animate(qMatrixBase(frame,:));
+            % 
+            %     endAffectorTr = self.getPoseT() * troty(-pi/2);
+            %     self.gripperLeft1.model.base = endAffectorTr;
+            %     self.gripperRight1.model.base = endAffectorTr * troty(pi);
+            %     self.gripperLeft1.model.animate(qMatrixLeft(frame,:));
+            %     self.gripperRight1.model.animate(qMatrixRight(frame,:));
+            % 
+            %     self = self.frameUpdate();
+            % end
+            % 
+            % pause(3);
+            % self = self.commandGrippers('open');
+            % self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
+            % self = self.commandGrippers('update');
+        % end
         %% Workspace Radius and Volume
         function self = plotRadAndVol(self)
             disp('The reach of the stationary UR3e can roughly be calculated as 0.9410m')
