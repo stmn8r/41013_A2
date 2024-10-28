@@ -81,6 +81,16 @@ classdef Assignment2
         
             % Place the bar at specified location
             PlaceObject('Bar.PLY',[0,0,0]);
+
+            t = hgtransform;
+            pole = PlaceObject('robot1Pole.ply',[0,0,0]);
+            set(pole, 'Parent', t);
+            set(t, 'Matrix', transl(-0.01,1.57,-0.05));
+
+            t = hgtransform;
+            pole = PlaceObject('midTable.ply',[0,0,0]);
+            set(pole, 'Parent', t);
+            set(t, 'Matrix', transl(-0.0,0.8,0.17));
         
             % Place the ingredients at specified locations
             t = hgtransform;
@@ -141,43 +151,44 @@ classdef Assignment2
         %% Gui command to pour straight drink variant 1
         function self = straightDrink1(self)
             
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,pi));
+            keyboard;
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,pi));
             self.holdbottle_ = [true,1];
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,pi));
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,1];
             self.SnapBottleTo(1, self.shelf_pos_arr(1,:), [0,0,0]);
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,pi));
         end
 
         %% Gui command to pour straight drink variant 2
         function self = straightDrink2(self)
             
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.12, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,pi));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.12, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,pi));
             self.holdbottle_ = [true,2];
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,pi));
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,2];
             self.SnapBottleTo(2, self.shelf_pos_arr(2,:), [0,0,0]);
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,pi));
         end
 
         %% Gui command to pour straight drink variant 3
         function self = straightDrink3(self)
             
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.12, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,pi));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.12, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,pi));
             self.holdbottle_ = [true,3];
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.1) * rpy2tr(-pi/2,0,pi));
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,3];
             self.SnapBottleTo(3, self.shelf_pos_arr(3,:), [0,0,0]);
-            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,pi));
         end
 
         
@@ -437,6 +448,7 @@ classdef Assignment2
 
             end
         end
+
 
         %% simultaneous movement demo
         % function simulMoveDemo(self)
