@@ -34,7 +34,7 @@ classdef Assignment2
 
         isEmergencyStopTriggered = false;
 
-        app
+        
 
     end
     
@@ -149,8 +149,8 @@ classdef Assignment2
         function self = straightDrink1(self)
             
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
-            disp('ESTOP pressed:')
-            disp(app.self.isEmergencyStopTriggered);
+            disp('ESTOP pressed3:')
+            disp(self.isEmergencyStopTriggered);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,1];
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
@@ -618,6 +618,23 @@ classdef Assignment2
             self = self.hideVol();
             self = self.controlLoop();
         end
+
+%% Setter function
+        function self = EmergencyStopTriggeredTrue(self)
+            % You can add additional logic here if needed
+            self.isEmergencyStopTriggered = true;
+            disp('Emergency stop triggered ');
+            % You can also add any actions you want to trigger here
+        end
+
+%% Setter function
+        function self = EmergencyStopTriggeredTru(self)
+            % You can add additional logic here if needed
+            self.isEmergencyStopTriggered = true;
+            disp('Emergency stop triggered ');
+            % You can also add any actions you want to trigger here
+        end
+
 
     end
 end
