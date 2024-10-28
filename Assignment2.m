@@ -31,6 +31,11 @@ classdef Assignment2
         joy = [];
         joy_status = false;
         joyToggle = false;
+
+        isEmergencyStopTriggered = false;
+
+        
+
     end
     
     methods
@@ -43,8 +48,9 @@ classdef Assignment2
             catch ERR
                 disp(ERR.message);
             end
+        %self.guiApp = GUItest();
         end
-        
+
         %% Initialize Scene
         function self = initialiseScene(self) % Load and place objects in the scene
             
@@ -103,6 +109,7 @@ classdef Assignment2
             set(self.bottles{4}, 'Parent', t);
             set(t, 'Matrix', (transl(self.shelf_pos_arr(4,:))));
 
+           
             drawnow();
             Logger().write('Initialisation finished');
         end
@@ -142,14 +149,19 @@ classdef Assignment2
         function self = straightDrink1(self)
             
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            disp('ESTOP pressed3:')
+            disp(self.isEmergencyStopTriggered);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
             self.holdbottle_ = [true,1];
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            disp(self.isEmergencyStopTriggered);
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
             self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
             self.holdbottle_ = [false,1];
             self.SnapBottleTo(1, self.shelf_pos_arr(1,:), [0,0,0]);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            
+            %end
         end
 
         %% Gui command to pour straight drink variant 2
@@ -256,6 +268,7 @@ classdef Assignment2
         
         %% Update graphics
         function self = frameUpdate(self)
+           
             self = self.commandGrippers('update');
             if self.holdbottle_(1) == true
                 self.HoldBottle(self.holdbottle_(2));
@@ -285,6 +298,7 @@ classdef Assignment2
 
             drawnow();
             pause(self.dt);
+            
         end
 
         %% Free move to given pose with ikcon
@@ -292,7 +306,7 @@ classdef Assignment2
             
             q0 = self.robot1.model.getpos(); % Initial joint values
             qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
-            for q = 1:size(qf,2)
+           for q = 1:size(qf,2)
                 while abs(qf(q)) > 2*pi
                     if qf(q) > 0
                         qf(q) = qf(q) - pi;
@@ -307,11 +321,15 @@ classdef Assignment2
             Logger().write(['   Target Joint State: ',mat2str(qf)]);
             Logger().write(['   Target Pose: ',mat2str(pose)]);
             
-            for frame = 1:self.steps 
-                self.robot1.model.animate(qMatrix(frame,:));
+            for frame = 1:self.steps
 
-                self = self.frameUpdate();
-
+                if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; 
+                end
+                    self.robot1.model.animate(qMatrix(frame,:));
+    
+                    self = self.frameUpdate();
             end
             ActPose = self.getPoseT();
             
@@ -354,6 +372,12 @@ classdef Assignment2
             
             % Interpolate both position and orientation
             for i = 1:self.steps
+                
+                 if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; % Exit the loop if emergency stop is triggered
+                end
+
                 % Linear interpolation for position (3D space)
                 pos_trajectory(:, i) = x0*(1-s(i)) + s(i)*xf;
                 
@@ -366,6 +390,11 @@ classdef Assignment2
 
             for i = 1:self.steps-1
 
+                 if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; % Exit the loop if emergency stop is triggered
+                end
+
                 xdot_pos = (pos_trajectory(:, i+1) - pos_trajectory(:, i)) / self.dt;  % Linear velocity
                 xdot_ori = (rpy_trajectory(:, i+1) - rpy_trajectory(:, i)) / self.dt;  % Angular velocity
                 xdot = [xdot_pos; xdot_ori];   % Full twist (6x1 vector: [vx; vy; vz; wx; wy; wz])
@@ -377,6 +406,12 @@ classdef Assignment2
             end
 
             for frame = 1:self.steps 
+                
+                if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; % Exit the loop if emergency stop is triggered
+                end
+                
                 self.robot1.model.animate(qMatrix(frame,:));
 
                 self = self.frameUpdate();
