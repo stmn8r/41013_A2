@@ -1,31 +1,56 @@
 classdef Assignment2
     properties
-        robot1 = [];% Robot model
-        gripperBase1 = []; % stores 
-        gripperLeft1 = cell(1,2); % stores (object, angle)
-        gripperRight1 = cell(1,2); % stores (object, angle)
+        robot1 = [];% Robot 1 model
+        gripperBase1 = []; % Robot 1's gripper base model
+        gripperLeft1 = cell(1,2); % stores (gripper claw 1, angle)
+        gripperRight1 = cell(1,2); % stores (gripper claw 2, angle)
+
+        robot2 = [];% Robot 2 model
+        gripperBase2 = []; % Robot 2's gripper base model
+        gripperLeft2 = cell(1,2); % stores (gripper claw 1, angle)
+        gripperRight2 = cell(1,2); % stores (gripper claw 2, angle)
+
         bottles = cell(1,9); % Array to store bottle objects
         bottlePositions = []; % Array to store bottle positions
-        jtraj_steps = 30; %should be even
-        holdbottle_ = [false, 1];
+        holdbottle_ = [false, 1]; % stores whether the gripper is holding a bottle, and the index of the bottle (from array 'bottles')
+        
+        steps = 14; %should be an even number
+        dt = 0.05;  % Discrete time step for simulation
+        
         safeBound = [];
         elip1 = [];
         elip2 = [];
         cyl = [];
 
-        % Shelf positions
-        Shelf_pos_1 = [-0.7,2.2,1.5];
-        Shelf_pos_2 = [-0.7,2.2,1.1];
-        Shelf_pos_3 = [0.6,2.2,1.5];
-        Shelf_pos_4 = [0.6,2.2,1.1];
+        % Shelf positions (x1 y1 z1; x2 y2 z2; etc)
+        shelf_pos_arr = [0.8 2.15 1.48;
+                         0.8 2.15 1.1;
+                         0.6 2.15 1.48;
+                         0.6 2.15 1.1];
+
+        joy = [];
+        joy_status = false;
+        joyToggle = false;
+
+        isEmergencyStopTriggered = false;
+
+        
+
     end
     
     methods
         %% Constructor
         function self = Assignment2()
             Logger().write('\erase');
+            try
+                self.joy = vrjoystick(1);
+                self.joy_status = true;
+            catch ERR
+                disp(ERR.message);
+            end
+        %self.guiApp = GUItest();
         end
-        
+
         %% Initialize Scene
         function self = initialiseScene(self) % Load and place objects in the scene
             
@@ -33,7 +58,7 @@ classdef Assignment2
             
             %Plot the robot in it's initial configuration
             clf;
-            self.robot1 = UR30(eye(4) * transl(0,1.5,1) * trotx(0) * troty(0));
+            self.robot1 = UR30(eye(4) * transl(0,1.45,1) * trotx(0) * troty(0));
             hold on;
 
          
@@ -41,13 +66,12 @@ classdef Assignment2
             ylim([-5, 5]);
             zlim([-5, 5]);
             axis equal;
-            self.robot1.model.animate(deg2rad([0 0 0 -90 0 0]));
-            
+            self.robot1.model.animate(deg2rad([-230 -60 100 -137 -5 90])); % Robot's initial joint configuration
             self.gripperBase1 = PlaceObject('gripperBase.ply',[0,0,0]);
             self.gripperLeft1{1} = PlaceObject('gripperClaw.ply',[0,0,0]);
-            self.gripperLeft1{2} = deg2rad(0);
+            self.gripperLeft1{2} = deg2rad(20);
             self.gripperRight1{1} = PlaceObject('gripperClaw.ply',[0,0,0]);
-            self.gripperRight1{2} = deg2rad(0);
+            self.gripperRight1{2} = deg2rad(20);
             self = self.commandGrippers('update');
             
             
@@ -62,97 +86,118 @@ classdef Assignment2
           
         
             % Place the bar at specified location
-            PlaceObject('Bar.ply',[0,0,0]);
+            PlaceObject('Bar.PLY',[0,0,0]);
         
             % Place the ingredients at specified locations
-            self.bottles{1} = PlaceObject('Whisky.ply',self.Shelf_pos_1);
-            self.bottles{2} = PlaceObject('Vodka.ply',self.Shelf_pos_2);
-            self.bottles{3} = PlaceObject('Cognac.ply',self.Shelf_pos_3);
-            self.bottles{4} = PlaceObject('Glass.ply',self.Shelf_pos_4);
-
-            % % Plot the table
-            % table = PlaceObject('tableBrown2.1x1.4x0.5m.ply', [0, 0, 0]);
-            % t = hgtransform;
-            % set(table, 'Parent', t);
-            % set(t, 'Matrix', (transl(-0.3, 0, 0)));
-            % 
-            % % Place emergency stop button
-            % estop = PlaceObject('emergencyStopButton.ply', [0, 0, 0]);
-            % verts = [get(estop, 'Vertices'), ones(size(get(estop, 'Vertices'), 1), 1)]; % Rotation
-            % verts = verts * 0.2; % Scaling factor
-            % set(estop, 'Vertices', verts(:, 1:3));
-            % t = hgtransform;
-            % set(estop, 'Parent', t);
-            % set(t, 'Matrix', (transl(0.65, -0.6, 0.5) * trotz(pi/2)));
-            % 
-            % % Place emergency stop button
-            % estop2 = PlaceObject('emergencyStopButton.ply', [0, 0, 0]);
-            % verts = [get(estop2, 'Vertices'), ones(size(get(estop2, 'Vertices'), 1), 1)]; % Rotation
-            % verts = verts * 0.2; % Scaling factor
-            % set(estop2, 'Vertices', verts(:, 1:3));
-            % t = hgtransform;
-            % set(estop2, 'Parent', t);
-            % set(t, 'Matrix', (transl(1.1, -1.1, 0.55) * trotx(pi/2)));
-            % 
-            % % Place fence
-            % fence = PlaceObject('fence.ply', [0, 0, 0]);
-            % verts = [get(fence, 'Vertices'), ones(size(get(fence, 'Vertices'), 1), 1)]; % Rotation
-            % verts(:,1) = verts(:,1) * 0.4; % Scaling factor
-            % verts(:,2) = verts(:,2) * 0.6; % Scaling factor
-            % verts(:,3) = verts(:,3) * 0.3; % Scaling factor
-            % set(fence, 'Vertices', verts(:, 1:3));
-            % t = hgtransform;
-            % set(fence, 'Parent', t);
-            % set(t, 'Matrix', (transl(-0.1, 0.55, -0.3)));
-            % 
-            % % Place fire extinguisher
-            % fireEx = PlaceObject('fireExtinguisher.ply', [0, 0, 0]);
-            % t = hgtransform;
-            % set(fireEx, 'Parent', t);
-            % set(t, 'Matrix', (transl(0.5, -1.25, 0)));
-            % 
-            % % Place the bricks
-            % lastPosition = [0.3, -0.4, 0.5];
-            % for i = 1:9
-            % 
-            %     if mod(i,3) == 1 && i ~= 1
-            %         self.brickPositions{i} = lastPosition + [0.1, -0.4, 0];  % Move bricks along -x axis
-            %         lastPosition = self.brickPositions{i};
-            %     else
-            %         self.brickPositions{i} = lastPosition + [0, 0.2, 0];  % Move bricks along -x axis
-            %         lastPosition = self.brickPositions{i};
-            %     end
-            %     self.bricks{i} = PlaceObject('HalfSizedRedGreenBrick.ply', [0,0,0]);
-            %     t = hgtransform;
-            %     set(self.bricks{i}, 'Parent', t);
-            %     set(t, 'Matrix', (transl(self.brickPositions{i})));
-            % end
+            t = hgtransform;
+            self.bottles{1} = PlaceObject('Whisky.ply',[0,0,0]);
+            set(self.bottles{1}, 'Parent', t);
+            set(t, 'Matrix', (transl(self.shelf_pos_arr(1,:))));
             
+            t = hgtransform;
+            self.bottles{2} = PlaceObject('Vodka.ply',[0,0,0]);
+            set(self.bottles{2}, 'Parent', t);
+            set(t, 'Matrix', (transl(self.shelf_pos_arr(2,:))));
+            
+            t = hgtransform;
+            self.bottles{3} = PlaceObject('Cognac.ply',[0,0,0]);
+            set(self.bottles{3}, 'Parent', t);
+            set(t, 'Matrix', (transl(self.shelf_pos_arr(3,:))));
 
+            t = hgtransform;
+            self.bottles{4} = PlaceObject('Glass.ply',[0,0,0]);
+            set(self.bottles{4}, 'Parent', t);
+            set(t, 'Matrix', (transl(self.shelf_pos_arr(4,:))));
+
+           
             drawnow();
             Logger().write('Initialisation finished');
         end
         
         %% Control Loop
         function self = controlLoop(self)
-           run = false;
+           run = true;
            while run == true
-                
+                % Looped control code in here
+
+                self = self.straightDrink1();
+                self = self.straightDrink2();
+                self = self.straightDrink3();
+
+
+
+               run = false;
            end
 
-           self = self.moveToPose(transl(self.Shelf_pos_1(1), self.Shelf_pos_1(2), self.Shelf_pos_1(3)+0.) * rpy2tr(0,pi/2,pi/2));
+           
            Logger().write('Program Completed');
-           pause;
         end
 
-        %% get pose
-        function output = getpose(self)
-            output = self.robot1.model.fkine(self.robot1.model.getpos());
+        %% Gui command to mix drink variant 1
+        function self = mixerOption1(self)
+            
+
         end
+
+        %% Gui command to mix drink variant 2
+        function self = mixerOption2(self)
+            
+
+        end
+
+        %% Gui command to pour straight drink variant 1
+        function self = straightDrink1(self)
+            
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            disp('ESTOP pressed3:')
+            disp(self.isEmergencyStopTriggered);
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.12, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self.holdbottle_ = [true,1];
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            disp(self.isEmergencyStopTriggered);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
+            self.holdbottle_ = [false,1];
+            self.SnapBottleTo(1, self.shelf_pos_arr(1,:), [0,0,0]);
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
+            
+            %end
+        end
+
+        %% Gui command to pour straight drink variant 2
+        function self = straightDrink2(self)
+            
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.12, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self.holdbottle_ = [true,2];
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
+            self.holdbottle_ = [false,2];
+            self.SnapBottleTo(2, self.shelf_pos_arr(2,:), [0,0,0]);
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(2,1), self.shelf_pos_arr(2,2)-0.3, self.shelf_pos_arr(2,3)+0.1) * rpy2tr(-pi/2,0,0));
+        end
+
+        %% Gui command to pour straight drink variant 3
+        function self = straightDrink3(self)
+            
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.12, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+            self.holdbottle_ = [true,3];
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.1) * rpy2tr(-pi/2,0,0));
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, -0.5), [1 0 0 0 0 0]);
+            self = self.moveToPoseRMRC(self.getPoseT() * transl(0, 0, 0.5), [1 0 0 0 0 0]);
+            self.holdbottle_ = [false,3];
+            self.SnapBottleTo(3, self.shelf_pos_arr(3,:), [0,0,0]);
+            self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(3,1), self.shelf_pos_arr(3,2)-0.3, self.shelf_pos_arr(3,3)+0.08) * rpy2tr(-pi/2,0,0));
+        end
+
+        
 
         %% get pose.T
-        function output = getposeT(self)
+        function output = getPoseT(self)
             output = self.robot1.model.fkine(self.robot1.model.getpos()).T;
+            
         end
 
         %% get Joint State
@@ -162,20 +207,23 @@ classdef Assignment2
 
 
         %% Move Bottle
-        function moveBottle(self, bottleNum)
-            % Update the position of a bottle based on the input handle and end effector pos
+        function HoldBottle(self, bottleNum)
+            % Update the position of a bottle based on the input handle and 
+            % end effector pos, i.e. make the relative pose of the bottle 
+            % 'sticky' to the pose of the end effector
 
             t = hgtransform;
             set(self.bottles{bottleNum}, 'Parent', t);
-            set(t, 'Matrix', (self.getposeT()) * transl(0,0,0.14) * trotz(pi/2));
+            set(t, 'Matrix', (self.getPoseT())* trotx(pi/2) * transl(0,0.12,-0.1));
         end
-
-        function moveBottleTo(self, bottleNum, trans, rpy)
+        
+        %% Teleport Bottle
+        function SnapBottleTo(self, bottleNum, trans, rpy)
             % Update the position of a bottle based on the input handle and transform + rotation values
 
             t = hgtransform;
             set(self.bottles{bottleNum}, 'Parent', t);
-            set(t, 'Matrix', (self.getposeT()) * transl(trans) * rpy2tr(rpy));
+            set(t, 'Matrix', (transl(trans) * rpy2tr(rpy)));
         end
 
         %% Draw Grippers
@@ -186,71 +234,80 @@ classdef Assignment2
                 case 'update'
                     t1 = hgtransform;
                     set(self.gripperLeft1{1}, 'Parent', t1);
-                    set(t1, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2) * trotx(pi)));
+                    set(t1, 'Matrix', (self.getPoseT() * transl(-0.03, 0, 0.07) * trotx(-pi/2) * trotz(-pi/2) * trotx(pi) * trotz(self.gripperLeft1{2})));
                     
                     t2 = hgtransform;
                     set(self.gripperRight1{1}, 'Parent', t2);
-                    set(t2, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2)));
+                    set(t2, 'Matrix', (self.getPoseT() * transl(0.03, 0, 0.07) * trotx(-pi/2) * trotz(-pi/2) * trotz(self.gripperRight1{2})));
                     
                     t3 = hgtransform;
                     set(self.gripperBase1, 'Parent', t3);
-                    set(t3, 'Matrix', (self.getposeT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2)));
+                    set(t3, 'Matrix', (self.getPoseT() * transl(0, 0, 0) * trotx(-pi/2) * trotz(-pi/2)));
                     
     
                 case 'open'
                     Logger().write('open claw');
                     Logger().write(' ');
-                    self.jtraj_steps = self.jtraj_steps/2;
-                    qMatrix1  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(10), self.jtraj_steps);
-                    qMatrix2  = jtraj(self.gripperRight1.model.getpos(), deg2rad(190), self.jtraj_steps);
+                    self.steps = self.steps/2;
                     
-                    for frame = 1:self.jtraj_steps
-                        self.gripperLeft1.model.animate(qMatrix1(frame,:));
-                        self.gripperRight1.model.animate(qMatrix2(frame,:));
-                        
-                        if (mod(frame,10))
-                            drawnow();
-                        end
-                    end
-                    self.jtraj_steps = self.jtraj_steps*2;
+
+
+                    self.steps = self.steps*2;
     
                 case 'close'
                     Logger().write('close claw');
                     Logger().write(' ');
-                    self.jtraj_steps = self.jtraj_steps/2;
-                    qMatrix1  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(3), self.jtraj_steps);
-                    qMatrix2  = jtraj(self.gripperRight1.model.getpos(), deg2rad(183), self.jtraj_steps);
-                
-                    for frame = 1:self.jtraj_steps
-                        self.gripperLeft1.model.animate(qMatrix1(frame,:));
-                        self.gripperRight1.model.animate(qMatrix2(frame,:));
-                        
-                        if (mod(frame,10))
-                            drawnow();
-                        end
-                    end
-                    self.jtraj_steps = self.jtraj_steps*2;
+                    self.steps = self.steps/2;
+                  
+
+
+                    self.steps = self.steps*2;
             end
         
         end
         
         %% Update graphics
         function self = frameUpdate(self)
+           
             self = self.commandGrippers('update');
             if self.holdbottle_(1) == true
-                self.moveBottle(self.holdbottle_(2));
+                self.HoldBottle(self.holdbottle_(2));
             end
+            
+
+            if (self.joy_status == true)
+                [axes, buttons, povs] = read(self.joy); %get controller values
+                if (buttons(13) == 1) % if ps5 button is pressed, loop manual control code until ps5 button is released then pressed again
+                    self.joyToggle = true; % manually control variable on
+                    button_release = false;
+                    
+                    while (self.joyToggle == true) 
+                        self = self.commandGrippers('update');
+                        joystick_command();
+                        
+                        if (buttons(13) == 0)
+                            button_release = true;
+                        end
+                        if (button_release == true && buttons(13) == 1)
+                            self.joyToggle = false;
+                        end
+                    end
+                    pause(2);
+                end
+            end
+
             drawnow();
-            pause(0.1);
+            pause(self.dt);
+            
         end
 
         %% Free move to given pose with ikcon
-        function self = moveToPose(self, pose)
+        function self = moveToPoseIkcon(self, pose)
             
             q0 = self.robot1.model.getpos(); % Initial joint values
             qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
-            for q = 1:size(qf,2)
-                if abs(qf(q)) > pi
+           for q = 1:size(qf,2)
+                while abs(qf(q)) > 2*pi
                     if qf(q) > 0
                         qf(q) = qf(q) - pi;
                     else
@@ -259,49 +316,132 @@ classdef Assignment2
                 end
             end
 
-            qMatrix = jtraj(q0, qf, self.jtraj_steps);
+            qMatrix = jtraj(q0, qf, self.steps);
 
             Logger().write(['   Target Joint State: ',mat2str(qf)]);
             Logger().write(['   Target Pose: ',mat2str(pose)]);
             
-            for frame = 1:self.jtraj_steps 
-                self.robot1.model.animate(qMatrix(frame,:));
-                if mod(frame,10)
-                    self = self.frameUpdate();
-                end
-            end
-            ActPose = self.getposeT();
-            
-            while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
-                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
-                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' trying again...']);
-                q0 = self.robot1.model.getpos(); % Initial joint values
-                qf = self.robot1.model.ikcon(pose * transl(0,0,-0.01), q0); % joint values for target pose
-                qMatrix = jtraj(q0, qf, self.jtraj_steps);
+            for frame = 1:self.steps
 
-                for frame2 = 1:self.jtraj_steps 
-                    self.robot1.model.animate(qMatrix(frame2,:));
-                    if mod(frame2,10)
-                        self = self.frameUpdate();
-                    end
+                if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; 
                 end
-                ActPose = self.getposeT();
+                    self.robot1.model.animate(qMatrix(frame,:));
+    
+                    self = self.frameUpdate();
+            end
+            ActPose = self.getPoseT();
+            
+            if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' Failed to achieve desired pose']);
+
+            else
+            
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
+                Logger().write(' ');
+
+            end
+        end
+
+
+        %% Free move to given pose with Resolved Motion Rate Control (RMRC) 
+        function self = moveToPoseRMRC(self, pose, mask)
+            
+            q0 = self.robot1.model.getpos();
+
+            T0 = self.getPoseT();     % Starting position
+            Tf = pose;                              % Ending position
+
+            x0 = transl(T0);                        % Starting position (x, y, z)
+            xf = transl(Tf);                        % Target position (x, y, z)
+
+            rpy0 = tr2rpy(T0);                      % Starting orientation (roll, pitch, yaw)
+            rpyf = tr2rpy(Tf);                      % Target orientation (roll, pitch, yaw)
+
+            s = lspb(0, 1, self.steps);             % LSPB interpolation scalar
+
+            lambda = 0.2;
+            
+            % Initialize arrays for storing trajectory
+            pos_trajectory = zeros(3, self.steps);     % Position trajectory (x, y, z)
+            rpy_trajectory = zeros(3, self.steps);     % Orientation trajectory (roll, pitch, yaw)
+            
+            % Interpolate both position and orientation
+            for i = 1:self.steps
+                
+                 if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; % Exit the loop if emergency stop is triggered
+                end
+
+                % Linear interpolation for position (3D space)
+                pos_trajectory(:, i) = x0*(1-s(i)) + s(i)*xf;
+                
+                % Linear interpolation for orientation (RPY)
+                rpy_trajectory(:, i) = rpy0*(1-s(i)) + s(i)*rpyf;
             end
             
-            Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
-            Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
-            Logger().write(' ');
+            qMatrix = nan(self.steps,6);
+            qMatrix(1,:) = self.robot1.model.ikine(T0, 'q0', q0, 'mask', mask);                 % Solve for joint angles
+
+            for i = 1:self.steps-1
+
+                 if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; % Exit the loop if emergency stop is triggered
+                end
+
+                xdot_pos = (pos_trajectory(:, i+1) - pos_trajectory(:, i)) / self.dt;  % Linear velocity
+                xdot_ori = (rpy_trajectory(:, i+1) - rpy_trajectory(:, i)) / self.dt;  % Angular velocity
+                xdot = [xdot_pos; xdot_ori];   % Full twist (6x1 vector: [vx; vy; vz; wx; wy; wz])
+
+                J = self.robot1.model.jacob0(qMatrix(i,:));                   % Get the Jacobian at the current state
+                Jinv_dls = inv((J'*J)+lambda^2*eye(6))*J';
+                qdot = Jinv_dls*xdot;                                              % Solve velocitities via RMRC
+                qMatrix(i+1,:) =  qMatrix(i,:) + self.dt*qdot';             % Update next joint state
+            end
+
+            for frame = 1:self.steps 
+                
+                if self.isEmergencyStopTriggered == true
+                    disp('STOPPED');
+                    break; % Exit the loop if emergency stop is triggered
+                end
+                
+                self.robot1.model.animate(qMatrix(frame,:));
+
+                self = self.frameUpdate();
+
+            end
+            ActPose = self.getPoseT();
+            
+            if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',num2str(sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)),' Failed to achieve desired pose']);
+            
+            else
+            
+                Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
+                Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
+                Logger().write(' ');
+
+            end
         end
+
         
         %% Move to given Joint State
         function self = moveManual(self, qf)
 
             q0 = self.robot1.model.getpos(); % Initial joint values          
 
-            qSuperMatrix = zeros(self.jtraj_steps, size(qf,2));
+            qSuperMatrix = zeros(self.steps, size(qf,2));
             for i = 1:size(qf,2)
                 if ~isnan(qf(i))
-                    qMatrix = jtraj(q0(i), qf(i), self.jtraj_steps);
+                    qMatrix = jtraj(q0(i), qf(i), self.steps);
                     qSuperMatrix(:,i) = qMatrix;
                 else
                     qSuperMatrix(:,i) = q0(i);
@@ -313,78 +453,70 @@ classdef Assignment2
             Logger().write(['   Moving to Joint State ',mat2str(qf)]);
             Logger().write(['   Target Pose ',mat2str(pose)]);
             
-            for frame = 1:self.jtraj_steps 
+            for frame = 1:self.steps 
                 self.robot1.model.animate(qSuperMatrix(frame,:));
-                if mod(frame,10)
-                    self = self.frameUpdate();
-                end
-            end
-            ActPose = self.getposeT();
-            
-            while sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
-                Logger().write(['   Δ = ',sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2),' trying again...']);
-                q0 = self.robot1.model.getpos(); % Initial joint values
-                qf = self.robot1.model.ikcon(pose * transl(0,0-0.01), q0); % joint values for target pose
-                qMatrix = jtraj(q0, qf, self.jtraj_steps);
 
-                for frame2 = 1:self.jtraj_steps 
-                    self.robot1.model.animate(qMatrix(frame2,:));
-                    if mod(frame2,10)
-                        self = self.frameUpdate();
-                    end
-                end
-                ActPose = self.getposeT();
+                self = self.frameUpdate();
+
             end
+            ActPose = self.getPoseT();
+            
+            if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
+                Logger().write(['   Δ = ',sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2),' Failed to achieve desired pose']);
+
+            else
 
             Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
             Logger().write(['   Δ = ',mat2str((sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2)))]);
             Logger().write(' ');
+
+            end
         end
 
         %% simultaneous movement demo
-        function simulMoveDemo(self)
-            self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
-
-            endAffectorTr = self.getposeT() * troty(-pi/2);
-            self.gripperLeft1.model.base = endAffectorTr;
-            self.gripperRight1.model.base = endAffectorTr * troty(pi);
-            self.gripperLeft1.model.animate(deg2rad(190));
-            self.gripperRight1.model.animate(deg2rad(10));
-
-            q0 = self.robot1.model.getpos(); % Initial joint values
-            qf = self.robot1.model.ikcon(self.getposeT * transl(0.2,0.2,0), q0); % joint values for target pose
-            
-            for q = 1:size(qf,2)
-                if abs(qf(q)) > pi
-                    if qf(q) > 0
-                        qf(q) = qf(q) - pi;
-                    else
-                        qf(q) = qf(q) + pi;
-                    end
-                end
-            end
-
-            qMatrixBase = jtraj(q0, qf, 100);
-            qMatrixRight  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(170), 100);
-            qMatrixLeft  = jtraj(self.gripperRight1.model.getpos(), deg2rad(-10), 100);
-            
-            for frame = 1:100 
-                self.robot1.model.animate(qMatrixBase(frame,:));
-
-                endAffectorTr = self.getposeT() * troty(-pi/2);
-                self.gripperLeft1.model.base = endAffectorTr;
-                self.gripperRight1.model.base = endAffectorTr * troty(pi);
-                self.gripperLeft1.model.animate(qMatrixLeft(frame,:));
-                self.gripperRight1.model.animate(qMatrixRight(frame,:));
-
-                self = self.frameUpdate();
-            end
-
-            pause(3);
-            self = self.commandGrippers('open');
-            self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
-            self = self.commandGrippers('update');
-        end
+        % function simulMoveDemo(self)
+            % self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
+            % 
+            % endAffectorTr = self.getPoseT() * troty(-pi/2);
+            % self.gripperLeft1.model.base = endAffectorTr;
+            % self.gripperRight1.model.base = endAffectorTr * troty(pi);
+            % self.gripperLeft1.model.animate(deg2rad(190));
+            % self.gripperRight1.model.animate(deg2rad(10));
+            % 
+            % q0 = self.robot1.model.getpos(); % Initial joint values
+            % qf = self.robot1.model.ikcon(self.getPoseT * transl(0.2,0.2,0), q0); % joint values for target pose
+            % 
+            % for q = 1:size(qf,2)
+            %     if abs(qf(q)) > 2*pi
+            %         if qf(q) > 0
+            %             qf(q) = qf(q) - pi;
+            %         else
+            %             qf(q) = qf(q) + pi;
+            %         end
+            %     end
+            % end
+            % 
+            % qMatrixBase = jtraj(q0, qf, 100);
+            % qMatrixRight  = jtraj(self.gripperLeft1.model.getpos(), deg2rad(170), 100);
+            % qMatrixLeft  = jtraj(self.gripperRight1.model.getpos(), deg2rad(-10), 100);
+            % 
+            % for frame = 1:100 
+            %     self.robot1.model.animate(qMatrixBase(frame,:));
+            % 
+            %     endAffectorTr = self.getPoseT() * troty(-pi/2);
+            %     self.gripperLeft1.model.base = endAffectorTr;
+            %     self.gripperRight1.model.base = endAffectorTr * troty(pi);
+            %     self.gripperLeft1.model.animate(qMatrixLeft(frame,:));
+            %     self.gripperRight1.model.animate(qMatrixRight(frame,:));
+            % 
+            %     self = self.frameUpdate();
+            % end
+            % 
+            % pause(3);
+            % self = self.commandGrippers('open');
+            % self.robot1.model.animate(deg2rad([-0.1 0 90 -90 -90 -90 90 -90]));
+            % self = self.commandGrippers('update');
+        % end
         %% Workspace Radius and Volume
         function self = plotRadAndVol(self)
             disp('The reach of the stationary UR3e can roughly be calculated as 0.9410m')
@@ -486,6 +618,23 @@ classdef Assignment2
             self = self.hideVol();
             self = self.controlLoop();
         end
+
+%% Setter function
+        function self = EmergencyStopTriggeredTrue(self)
+            % You can add additional logic here if needed
+            self.isEmergencyStopTriggered = true;
+            disp('Emergency stop triggered ');
+            % You can also add any actions you want to trigger here
+        end
+
+%% Setter function
+        function self = EmergencyStopTriggeredTru(self)
+            % You can add additional logic here if needed
+            self.isEmergencyStopTriggered = true;
+            disp('Emergency stop triggered ');
+            % You can also add any actions you want to trigger here
+        end
+
 
     end
 end
