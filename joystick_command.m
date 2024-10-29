@@ -5,9 +5,7 @@ caps(joy) % display joystick information
 [axes, buttons, povs] = read(joy);
 
 %% Start "real-time" simulation
-q = self.robot1.model.getpos();  % Set initial robot configuration 'q'
-
-%self.robot1.delay = 0.001;    % Set smaller delay when animating
+q = app.robot1.model.getpos();  % Set initial robot configuration 'q'
 
 dt = 0.05;      % Set time step for simulation (seconds)
 
@@ -34,22 +32,22 @@ n = 0;  % Initialise step count to zero
     vz = Kv*(buttons(6)-buttons(5));
     
     if (abs(axes(3)) > 0.05)
-        wx = Kw*axes(3);
+        wx = Kw*axes(6);
     else
         wx = 0;
     end
     if (abs(axes(6)) > 0.05)
-        wy = Kw*axes(6);
+        wy = Kw*axes(3);
     else
         wy = 0;
     end
-    wz = Kw*(axes(5)+1)-Kw*(axes(4)+1);
+    wz = Kw*(axes(4)+1)-Kw*(axes(5)+1);
 
     dx = [vx;vy;vz;wx;wy;wz];
     % 2 - use simple admittance scheme to convert force measurement into
     % velocity command
     % 2 - use J inverse to calculate joint velocity
-    J = self.robot1.model.jacob0(q);
+    J = app.robot1.model.jacob0(q);
     %dq = pinv(J)*dx;
     
     
@@ -65,7 +63,7 @@ n = 0;  % Initialise step count to zero
     % -------------------------------------------------------------
     
     % Update plot
-    self.robot1.model.animate(q);  
+    app.robot1.model.animate(q);  
     pause(dt);
 %end
       
