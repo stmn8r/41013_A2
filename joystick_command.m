@@ -7,7 +7,7 @@ caps(joy) % display joystick information
 %% Start "real-time" simulation
 q = app.robot1.model.getpos();  % Set initial robot configuration 'q'
 
-dt = 0.05;      % Set time step for simulation (seconds)
+dt = 0.1;      % Set time step for simulation (seconds)
 
 n = 0;  % Initialise step count to zero 
 %while(buttons(13) == 1)
@@ -63,7 +63,7 @@ n = 0;  % Initialise step count to zero
     % -------------------------------------------------------------
     
     % Update plot
-    app.robot1.model.animate(q);  
-    pause(dt);
+    app.robot1.model.animate(q);
+    pause(0.1);
 %end
       
