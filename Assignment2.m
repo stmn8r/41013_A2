@@ -65,7 +65,7 @@ classdef Assignment2
             xlim([-5, 5]);
             ylim([-5, 5]);
             zlim([-5, 5]);
-            axis equal;
+            axis tight;
             self.robot1.model.animate(deg2rad([-230 -60 100 -137 -5 90])); % Robot's initial joint configuration
             self.gripperBase1 = PlaceObject('gripperBase.ply',[0,0,0]);
             self.gripperLeft1{1} = PlaceObject('gripperClaw.ply',[0,0,0]);
@@ -77,11 +77,63 @@ classdef Assignment2
             
             % Plot objects around the envionment
 
+            % Adding walls
+            % Left side wall
+            surf([-5,-5;-5,-5], ...  % x axis
+                [-4,-4;4,4], ...     % y axis
+                 [0,2.8;0,2.8], ...        % z axis
+              'CData', imread('Wall.jpeg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
+            % Adding walls
+            % Right side wall
+            surf([-5,-5;5,5], ...  % x axis
+                [4,4;4,4], ...     % y axis
+                 [0,2.8;0,2.8], ...        % z axis
+              'CData', imread('Wall.jpeg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
+            % Adding decor
+
+            % Door
+            surf([-5,-5;-5,-5], ...  % x axis
+                [-2,-2;-1,-1], ...     % y axis
+                 [0,2;0,2], ...        % z axis
+              'CData', imread('Door.jpg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
+            % TAB sign
+            surf([-5,-5;-5,-5], ...  % x axis
+                [-1.8,-1.8;-1.2,-1.2], ...     % y axis
+                 [2.2,2.8;2.2,2.8], ...        % z axis
+              'CData', imread('TAB.jpeg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
+            % Bar logo
+            surf([-5,-5;-5,-5], ...  % x axis
+                [0,0;2,2], ...     % y axis
+                 [0.5,2.5;0.5,2.5], ...        % z axis
+              'CData', imread('Cyber Lounge logo.jpeg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
+            % Warning signs
+            surf([-2,-2;-2,-2], ...  % x axis
+                [2,2;4,4], ...     % y axis
+                 [2.2,2.8;2.2,2.8], ...        % z axis
+              'CData', imread('Warning.jpeg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
+            surf([2,2;2,2], ...  % x axis
+                [2,2;4,4], ...     % y axis
+                 [2.2,2.8;2.2,2.8], ...        % z axis
+              'CData', imread('Warning.jpeg'), ... % uploading image to surface
+              'FaceColor', 'texturemap');
+
             % Add wood to floor
             surf([-5,-5;5,5] ...        % x axis
             ,[-4,4;-4,4] ...            % y axis
             ,[0,0;0,0] ...          % z axis
-            ,'CData',imread('floor.jpg') ...
+            ,'CData',imread('floor.jpg') ... % uploading image to surface
             ,'FaceColor','texturemap');
           
         
