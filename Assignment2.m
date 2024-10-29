@@ -87,6 +87,12 @@ classdef Assignment2
         
             % Place the bar at specified location
             PlaceObject('Bar.PLY',[0,0,0]);
+
+            % Place the fire extinguisher at specified location
+            PlaceObject('fireExtinguisherElevated.ply',[2.5,2.25,0.465]);
+
+            % Place the estop at specified location
+            PlaceObject('emergencyStopButton.ply',[1.7,-1.7,1.1]);
         
             % Place the ingredients at specified locations
             t = hgtransform;
