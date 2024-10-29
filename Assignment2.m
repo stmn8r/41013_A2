@@ -1,5 +1,6 @@
 classdef Assignment2
     properties
+        % *********** NOTE! THIS FILE IS DEPRECIATED - EDIT THE GUITEST FILE! *****************
         robot1 = [];% Robot 1 model
         gripperBase1 = []; % Robot 1's gripper base model
         gripperLeft1 = cell(1,2); % stores (gripper claw 1, angle)

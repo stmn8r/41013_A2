@@ -1,5 +1,6 @@
 classdef Assignment2
     properties
+        % *********** NOTE! THIS FIL
         robot1 = [];% Robot 1 model
         gripperBase1 = []; % Robot 1's gripper base model
         gripperLeft1 = cell(1,2); % stores (gripper claw 1, angle)
@@ -48,7 +49,7 @@ classdef Assignment2
             catch ERR
                 disp(ERR.message);
             end
-        %self.guiApp = GUItest();
+
         end
 
         %% Initialize Scene
@@ -87,6 +88,12 @@ classdef Assignment2
         
             % Place the bar at specified location
             PlaceObject('Bar.PLY',[0,0,0]);
+
+            % Place the fire extinguisher at specified location
+            PlaceObject('fireExtinguisherElevated.ply',[2.5,2.25,0.465]);
+
+            % Place the estop at specified location
+            PlaceObject('emergencyStopButton.ply',[1.7,-1.7,1.1]);
         
             % Place the ingredients at specified locations
             t = hgtransform;
@@ -161,7 +168,6 @@ classdef Assignment2
             self.SnapBottleTo(1, self.shelf_pos_arr(1,:), [0,0,0]);
             self = self.moveToPoseIkcon(transl(self.shelf_pos_arr(1,1), self.shelf_pos_arr(1,2)-0.3, self.shelf_pos_arr(1,3)+0.1) * rpy2tr(-pi/2,0,0));
             
-            %end
         end
 
         %% Gui command to pour straight drink variant 2
@@ -302,10 +308,10 @@ classdef Assignment2
         end
 
         %% Free move to given pose with ikcon
-        function self = moveToPoseIkcon(self, pose)
+        function app = moveToPoseIkcon(app, pose)
             
-            q0 = self.robot1.model.getpos(); % Initial joint values
-            qf = self.robot1.model.ikcon(pose, q0); % joint values for target pose
+            q0 = app.robot1.model.getpos(); % Initial joint values
+            qf = app.robot1.model.ikcon(pose, q0); % joint values for target pose
            for q = 1:size(qf,2)
                 while abs(qf(q)) > 2*pi
                     if qf(q) > 0
@@ -316,22 +322,31 @@ classdef Assignment2
                 end
             end
 
-            qMatrix = jtraj(q0, qf, self.steps);
+            qMatrix = jtraj(q0, qf, app.steps);
 
             Logger().write(['   Target Joint State: ',mat2str(qf)]);
             Logger().write(['   Target Pose: ',mat2str(pose)]);
             
-            for frame = 1:self.steps
+            for frame = 1:app.steps
 
-                if self.isEmergencyStopTriggered == true
-                    disp('STOPPED');
-                    break; 
+                if app.isEmergencyStopTriggered == true
+                    CurrentPos = app.robot1.model.getpos();
+                    app.robot1.model.animate(CurrentPos);
+                 
+                 % Wait until the emergency stop is released
+                while app.isEmergencyStopTriggered
+                    pause(0.1); % Brief pause to prevent busy waiting
                 end
-                    self.robot1.model.animate(qMatrix(frame,:));
+                
+                disp('EMERGENCY STOP RELEASED. Resuming movement.');
+
+                 else
+                    app.robot1.model.animate(qMatrix(frame,:));
     
-                    self = self.frameUpdate();
+                    app = app.frameUpdate();
+                end
             end
-            ActPose = self.getPoseT();
+            ActPose = app.getPoseT();
             
             if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
                 
@@ -349,11 +364,11 @@ classdef Assignment2
 
 
         %% Free move to given pose with Resolved Motion Rate Control (RMRC) 
-        function self = moveToPoseRMRC(self, pose, mask)
+        function app = moveToPoseRMRC(app, pose, mask)
             
-            q0 = self.robot1.model.getpos();
+            q0 = app.robot1.model.getpos();
 
-            T0 = self.getPoseT();     % Starting position
+            T0 = app.getPoseT();     % Starting position
             Tf = pose;                              % Ending position
 
             x0 = transl(T0);                        % Starting position (x, y, z)
@@ -362,62 +377,89 @@ classdef Assignment2
             rpy0 = tr2rpy(T0);                      % Starting orientation (roll, pitch, yaw)
             rpyf = tr2rpy(Tf);                      % Target orientation (roll, pitch, yaw)
 
-            s = lspb(0, 1, self.steps);             % LSPB interpolation scalar
+            s = lspb(0, 1, app.steps);             % LSPB interpolation scalar
 
             lambda = 0.2;
             
             % Initialize arrays for storing trajectory
-            pos_trajectory = zeros(3, self.steps);     % Position trajectory (x, y, z)
-            rpy_trajectory = zeros(3, self.steps);     % Orientation trajectory (roll, pitch, yaw)
+            pos_trajectory = zeros(3, app.steps);     % Position trajectory (x, y, z)
+            rpy_trajectory = zeros(3, app.steps);     % Orientation trajectory (roll, pitch, yaw)
             
             % Interpolate both position and orientation
-            for i = 1:self.steps
+            for i = 1:app.steps
                 
-                 if self.isEmergencyStopTriggered == true
-                    disp('STOPPED');
-                    break; % Exit the loop if emergency stop is triggered
+                 if app.isEmergencyStopTriggered == true
+                    CurrentPos = app.robot1.model.getpos();
+                    app.robot1.model.animate(CurrentPos);
+                 
+                 % Wait until the emergency stop is released
+                while app.isEmergencyStopTriggered
+                    pause(0.1); % Brief pause to prevent busy waiting
                 end
+                
+                disp('EMERGENCY STOP RELEASED. Resuming movement.');
 
+                 else
+                
                 % Linear interpolation for position (3D space)
                 pos_trajectory(:, i) = x0*(1-s(i)) + s(i)*xf;
                 
                 % Linear interpolation for orientation (RPY)
                 rpy_trajectory(:, i) = rpy0*(1-s(i)) + s(i)*rpyf;
+                 end
             end
             
-            qMatrix = nan(self.steps,6);
-            qMatrix(1,:) = self.robot1.model.ikine(T0, 'q0', q0, 'mask', mask);                 % Solve for joint angles
+            qMatrix = nan(app.steps,6);
+            qMatrix(1,:) = app.robot1.model.ikine(T0, 'q0', q0, 'mask', mask);                 % Solve for joint angles
 
-            for i = 1:self.steps-1
+            for i = 1:app.steps-1
 
-                 if self.isEmergencyStopTriggered == true
-                    disp('STOPPED');
-                    break; % Exit the loop if emergency stop is triggered
+                 if app.isEmergencyStopTriggered == true
+                    CurrentPos = app.robot1.model.getpos();
+                    app.robot1.model.animate(CurrentPos);
+                 
+                 % Wait until the emergency stop is released
+                while app.isEmergencyStopTriggered
+                    pause(0.1); % Brief pause to prevent busy waiting
                 end
+                
+                disp('EMERGENCY STOP RELEASED. Resuming movement.');
 
-                xdot_pos = (pos_trajectory(:, i+1) - pos_trajectory(:, i)) / self.dt;  % Linear velocity
-                xdot_ori = (rpy_trajectory(:, i+1) - rpy_trajectory(:, i)) / self.dt;  % Angular velocity
+                else
+
+                xdot_pos = (pos_trajectory(:, i+1) - pos_trajectory(:, i)) / app.dt;  % Linear velocity
+                xdot_ori = (rpy_trajectory(:, i+1) - rpy_trajectory(:, i)) / app.dt;  % Angular velocity
                 xdot = [xdot_pos; xdot_ori];   % Full twist (6x1 vector: [vx; vy; vz; wx; wy; wz])
 
-                J = self.robot1.model.jacob0(qMatrix(i,:));                   % Get the Jacobian at the current state
+                J = app.robot1.model.jacob0(qMatrix(i,:));                   % Get the Jacobian at the current state
                 Jinv_dls = inv((J'*J)+lambda^2*eye(6))*J';
                 qdot = Jinv_dls*xdot;                                              % Solve velocitities via RMRC
-                qMatrix(i+1,:) =  qMatrix(i,:) + self.dt*qdot';             % Update next joint state
+                qMatrix(i+1,:) =  qMatrix(i,:) + app.dt*qdot';             % Update next joint state
+                 end
             end
 
-            for frame = 1:self.steps 
+            for frame = 1:app.steps 
                 
-                if self.isEmergencyStopTriggered == true
-                    disp('STOPPED');
-                    break; % Exit the loop if emergency stop is triggered
+                if app.isEmergencyStopTriggered == true
+                    CurrentPos = app.robot1.model.getpos();
+                    app.robot1.model.animate(CurrentPos);
+                 
+                 % Wait until the emergency stop is released
+                while app.isEmergencyStopTriggered
+                    pause(0.1); % Brief pause to prevent busy waiting
                 end
                 
-                self.robot1.model.animate(qMatrix(frame,:));
+                disp('EMERGENCY STOP RELEASED. Resuming movement.');
 
-                self = self.frameUpdate();
+                 else
+                
+                app.robot1.model.animate(qMatrix(frame,:));
+
+                app = app.frameUpdate();
+                end
 
             end
-            ActPose = self.getPoseT();
+            ActPose = app.getPoseT();
             
             if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
                 Logger().write(['   Actual Pose: ',mat2str(ActPose)]);
@@ -434,14 +476,14 @@ classdef Assignment2
 
         
         %% Move to given Joint State
-        function self = moveManual(self, qf)
+        function app = moveManual(app, qf)
 
-            q0 = self.robot1.model.getpos(); % Initial joint values          
+            q0 = app.robot1.model.getpos(); % Initial joint values          
 
-            qSuperMatrix = zeros(self.steps, size(qf,2));
+            qSuperMatrix = zeros(app.steps, size(qf,2));
             for i = 1:size(qf,2)
                 if ~isnan(qf(i))
-                    qMatrix = jtraj(q0(i), qf(i), self.steps);
+                    qMatrix = jtraj(q0(i), qf(i), app.steps);
                     qSuperMatrix(:,i) = qMatrix;
                 else
                     qSuperMatrix(:,i) = q0(i);
@@ -449,17 +491,31 @@ classdef Assignment2
                 end
             end
 
-            pose = self.robot1.model.fkine(qf).T;
+            pose = app.robot1.model.fkine(qf).T;
             Logger().write(['   Moving to Joint State ',mat2str(qf)]);
             Logger().write(['   Target Pose ',mat2str(pose)]);
             
-            for frame = 1:self.steps 
-                self.robot1.model.animate(qSuperMatrix(frame,:));
+            for frame = 1:app.steps 
+                
+                if app.isEmergencyStopTriggered == true
+                    CurrentPos = app.robot1.model.getpos();
+                    app.robot1.model.animate(CurrentPos);
+                 
+                 % Wait until the emergency stop is released
+                while app.isEmergencyStopTriggered
+                    pause(0.1); % Brief pause to prevent busy waiting
+                end
+                
+                disp('EMERGENCY STOP RELEASED. Resuming movement.');
 
-                self = self.frameUpdate();
+                else
 
+                app.robot1.model.animate(qSuperMatrix(frame,:));
+
+                app = app.frameUpdate();
+                end
             end
-            ActPose = self.getPoseT();
+            ActPose = app.getPoseT();
             
             if sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2) > 0.05
                 Logger().write(['   Δ = ',sqrt((ActPose(1,4)-pose(1,4))^2+(ActPose(2,4)-pose(2,4))^2+(ActPose(3,4)-pose(3,4))^2),' Failed to achieve desired pose']);
@@ -621,18 +677,18 @@ classdef Assignment2
 
 %% Setter function
         function self = EmergencyStopTriggeredTrue(self)
-            % You can add additional logic here if needed
+
             self.isEmergencyStopTriggered = true;
             disp('Emergency stop triggered ');
-            % You can also add any actions you want to trigger here
+
         end
 
 %% Setter function
-        function self = EmergencyStopTriggeredTru(self)
-            % You can add additional logic here if needed
-            self.isEmergencyStopTriggered = true;
-            disp('Emergency stop triggered ');
-            % You can also add any actions you want to trigger here
+        function self = EmergencyStopTriggeredFalse(self)
+
+            self.isEmergencyStopTriggered = false;
+            disp('Emergency stop reset ');
+
         end
 
 
